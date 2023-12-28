@@ -1,0 +1,28 @@
+# Ignore compiled files
+*.class
+*.o
+*.pyc
+
+# Ignore dependencies
+/node_modules
+/bower_components
+
+# Ignore build output
+/build
+/dist
+
+# Ignore IDE and editor files
+/.venv
+/.idea
+/.vscode
+/.VSCodeCounter
+/__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.sublime-project
+*.sublime-workspace
+
+# Ignore system files
+.DS_Store
+Thumbs.db
