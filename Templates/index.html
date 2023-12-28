@@ -1,0 +1,20 @@
+<head>
+    <title>Game</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"
+        integrity="sha384-mZLF4UVrpi/QTWPA7BjNPEnkIfRFn4ZEO3Qt/HFklTJBj/gBOV8G3HcKn4NfQblz"
+        crossorigin="anonymous"></script>
+</head>
+<body>
+    <canvas id="GameCanvas"></canvas>
+    <div id="login">
+        <input type="text" id="username" placeholder="Username" />
+        <input type="password" id="password" placeholder="Password" />
+        <input type="submit" value="Join" onclick="connection.connect(username.value, password.value)" />
+    </div>
+    <div id="players"></div>
+    <div id="connectionStatus">{{connected}}</div>
+
+    <script src="{{ url_for('static', filename='js/Renderer.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/Connection.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/game.js') }}"></script>
+</body>
