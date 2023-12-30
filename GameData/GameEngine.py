@@ -133,3 +133,26 @@ class GameEngine:
                 viewport["tiles"].append(row)
             return viewport
         return None
+
+    def get_viewport_variable_size(self, player, radious):
+        player_entity = self.get_player(player)
+        if player_entity:
+            x, y = player_entity.position
+            # Get viewport
+            viewport = {"tiles": [], "position": (x, y)}
+
+            # Player can see 3x3 grid around them
+            for j in range(y - radious, y + radious + 1):
+                row = []
+                for i in range(x - radious, x + radious + 1):
+                    if self.check_bounds(i, j):
+                        # Convert entity to a serializable format if necessary
+                        entity = self.DUMMY_MAP[j][i]
+                        if isinstance(entity, Entity):
+                            entity = entity.to_dict()  # Assuming Entity has a method to convert to dictionary
+                        row.append(entity)
+                    else:
+                        row.append('w')
+                viewport["tiles"].append(row)
+            return viewport
+        return None
