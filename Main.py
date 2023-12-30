@@ -1,3 +1,4 @@
+import functools
 from GameData.ConnectionHandler import ConnectionHandler
 from GameData.GameEngine import GameEngine
 from GameData.Action import Action
@@ -10,6 +11,18 @@ import logging
 app = Flask(__name__)
 socketio = SocketIO(app)
 logger = logging.getLogger(__name__)
+
+
+def authenticated_only(f):
+    @functools.wraps(f)
+    def wrapped(*args, **kwargs):
+        session_id = request.sid
+        player = connection_handler.get_player_entity_by_session(session_id)
+        if player:
+            return f(*args, **kwargs)
+        else:
+            socketio.emit('unauthorized', {"status": "failure"})
+    return wrapped
 
 
 @app.route('/')
@@ -49,12 +62,14 @@ def handle_disconnect():
     print("Client disconnected")
 
 
+@authenticated_only
 @socketio.on('action')
 def handle_action(data):
     session_id = request.sid
-    player = connection_handler.get_player_by_session(session_id)
+    player = connection_handler.get_player_entity_by_session(session_id)
+    print(f"Received action from {player.name}: {data}")
     if player:
-        action = Action(player, data['action'])
+        action = Action(player, data['action'], data['target'], data['data'])
         game_engine.add_action(action)
 
 
