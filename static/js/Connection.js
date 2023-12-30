@@ -1,7 +1,5 @@
 class Connection {
     constructor(renderer) {
-        console.log('Connection constructor');
-        console.log(renderer);
         this.renderer = renderer;
         this.socket = null;
         this.connected = false;
@@ -66,6 +64,12 @@ class Connection {
             this.renderer.renderMap(gameState);
         } catch (e) {
             console.error("Error parsing gameState:", e);
+        }
+    }
+
+    handleAction(action) {
+        if (this.connected) {
+            this.socket.emit('action', action);
         }
     }
 
