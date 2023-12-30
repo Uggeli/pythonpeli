@@ -25,11 +25,18 @@ class ConnectionHandler:
                 return p
         return None
 
-    def get_player_by_session(self, session_id):
+    def get_player_by_session(self, session_id) -> str:
         for player, id in self.connected_players.items():
             if id == session_id:
                 return player
         return None
+
+    def get_player_entity_by_session(self, session_id) -> Entity:
+        player = self.get_player_by_session(session_id)
+        if player:
+            return self.get_player(player)
+        return None
+
 
     def remove_player_by_session(self, session_id):
         player = self.get_player_by_session(session_id)
