@@ -62,8 +62,8 @@ def handle_disconnect():
     print("Client disconnected")
 
 
-@authenticated_only
 @socketio.on('action')
+@authenticated_only
 def handle_action(data):
     session_id = request.sid
     player = connection_handler.get_player_entity_by_session(session_id)
