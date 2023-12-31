@@ -6,20 +6,10 @@ from flask_socketio import SocketIO
 from GameData.Entities import Entity
 from GameData.Action import Action
 from GameData.EventHub import EventHub, Event  # noqa: F401
+from GameData.Managers import MapManager, TextureManager, MovementManager, SpawnManager, CollisionManager
 
 
 class GameEngine:
-    DUMMY_MAP = [
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 'w', 'w', 'w', 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ]
-
     players = []
     actions = []
 
@@ -30,7 +20,16 @@ class GameEngine:
         self.EventHub.add_listener("move", self.add_action)
 
         # init Managers
-        
+        self.MapManager = MapManager(self.config)
+        self.TextureManager = TextureManager(self.config)
+        self.MovementManager = MovementManager(self.config)
+        self.SpawnManager = SpawnManager(self.config)
+        self.CollisionManager = CollisionManager(self.config)
+
+        # init EventHub
+        self.EventHub.add_listener("move", self.MovementManager.OnMoveRequest)
+        self.EventHub.add_listener("collide", self.CollisionManager.OnCollide)
+        self.EventHub.add_listener("spawn", self.SpawnManager.OnSpawn)
 
     def move(self, entity, direction):
         x, y = entity.position
@@ -112,54 +111,9 @@ class GameEngine:
             action(*args)
         self.actions = []
 
+        # Update players
         for player in self.players:
-            game_state = self.get_viewport_variable_size(player)
+            game_state = self.MapManager.get_viewport_variable_size(player)
             self.socketio.emit('gameStateUpdate', json.dumps(game_state))  # Convert game_state to a JSON string
             # socketio.emit('gameStateUpdate', jsonify(game_state))
 
-    def get_gamestate(self, player):
-        # Get player position
-        player_entity = self.get_player(player)
-        if player_entity:
-            x, y = player_entity.position
-            # Get viewport
-            viewport = {"tiles": [], "position": (x, y)}
-
-            # Player can see 3x3 grid around them
-            for j in range(y - 1, y + 2):
-                row = []
-                for i in range(x - 1, x + 2):
-                    if self.check_bounds(i, j):
-                        # Convert entity to a serializable format if necessary
-                        entity = self.DUMMY_MAP[j][i]
-                        if isinstance(entity, Entity):
-                            entity = entity.to_dict()  # Assuming Entity has a method to convert to dictionary
-                        row.append(entity)
-                    else:
-                        row.append('w')  # If out of bounds, return wall
-                viewport["tiles"].append(row)
-            return viewport
-        return None
-
-    def get_viewport_variable_size(self, player, radious=6):
-        player_entity = self.get_player(player)
-        if player_entity:
-            x, y = player_entity.position
-            # Get viewport
-            viewport = {"tiles": [], "position": (x, y)}
-
-            # Player can see 3x3 grid around them
-            for j in range(y - radious, y + radious + 1):
-                row = []
-                for i in range(x - radious, x + radious + 1):
-                    if self.check_bounds(i, j):
-                        # Convert entity to a serializable format if necessary
-                        entity = self.DUMMY_MAP[j][i]
-                        if isinstance(entity, Entity):
-                            entity = entity.to_dict()  # Assuming Entity has a method to convert to dictionary
-                        row.append(entity)
-                    else:
-                        row.append('w')
-                viewport["tiles"].append(row)
-            return viewport
-        return None
