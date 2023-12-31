@@ -1,5 +1,6 @@
 class Entity:
-    position = None
+    local_position = None  # in tiles
+    world_position = None  # in chunks
     name = None
     session_id = None
     color = None
