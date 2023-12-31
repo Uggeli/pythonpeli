@@ -5,6 +5,7 @@ import time
 from flask_socketio import SocketIO
 from GameData.Entities import Entity
 from GameData.Action import Action
+from GameData.EventHub import EventHub, Event  # noqa: F401
 
 
 class GameEngine:
@@ -22,8 +23,14 @@ class GameEngine:
     players = []
     actions = []
 
-    def __init__(self, socketio: SocketIO):
+    def __init__(self, socketio: SocketIO, event_hub: EventHub, config):
         self.socketio = socketio
+        self.EventHub = event_hub
+        self.config = config
+        self.EventHub.add_listener("move", self.add_action)
+
+        # init Managers
+        
 
     def move(self, entity, direction):
         x, y = entity.position
@@ -106,7 +113,7 @@ class GameEngine:
         self.actions = []
 
         for player in self.players:
-            game_state = self.get_gamestate(player)
+            game_state = self.get_viewport_variable_size(player)
             self.socketio.emit('gameStateUpdate', json.dumps(game_state))  # Convert game_state to a JSON string
             # socketio.emit('gameStateUpdate', jsonify(game_state))
 
@@ -134,7 +141,7 @@ class GameEngine:
             return viewport
         return None
 
-    def get_viewport_variable_size(self, player, radious):
+    def get_viewport_variable_size(self, player, radious=6):
         player_entity = self.get_player(player)
         if player_entity:
             x, y = player_entity.position
