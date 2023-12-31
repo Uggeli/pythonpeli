@@ -1,0 +1,12 @@
+How actions work:
+Actions are what the user can do to the game. npcs should have all same actions available to them as the player. 
+Action:
+    - name
+    - description
+    - function
+    - target
+    - target_type
+    - target_description
+    - target_function
+    - target_required
+    - target_required_description

@@ -37,7 +37,6 @@ class ConnectionHandler:
             return self.get_player(player)
         return None
 
-
     def remove_player_by_session(self, session_id):
         player = self.get_player_by_session(session_id)
         if player:
