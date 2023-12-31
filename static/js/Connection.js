@@ -40,8 +40,22 @@ class Connection {
     }
 
     handleUnauthorized(msg) {
-        console.log('Unauthorized:', msg.message);
-        alert('Authentication failed: ' + msg.message);
+        msg = JSON.parse(msg);
+        try {
+            msg = JSON.parse(msg);
+        }
+        catch (e) {
+            console.log('Unauthorized:', msg.status);
+            flash('Authentication failed: ' + msg.status);
+            // reset the connection
+            this.socket.disconnect();
+            document.getElementById('login').style.display = 'block'; // Show login form
+        }
+        console.log('Unauthorized:', msg.status);
+        flash('Authentication failed: ' + msg.status);
+        // reset the connection
+        this.socket.disconnect();
+        document.getElementById('login').style.display = 'block'; // Show login form
     }
 
     handlePlayers(players) {
