@@ -1,7 +1,8 @@
 import functools
 from GameData.ConnectionHandler import ConnectionHandler
+from GameData.EventHub import EventHub
 from GameData.GameEngine import GameEngine
-from GameData.Action import Action
+from GameData.Entities import Entity
 
 import threading
 from flask import Flask, render_template, request
@@ -37,14 +38,28 @@ def authenticate(username, password):
     return False
 
 
+def get_spawn_position():
+    return (0, 0)
+
+
+def create_player_entity(username):
+    return Entity(username, None, None)
+
+
 @socketio.on('authentication')
 def handle_authentication(data):
     session_id = request.sid
     username = data['username']
     password = data['password']
     if authenticate(username, password):
-        connection_handler.add_player(username, session_id)
-        game_engine.add_player(connection_handler.get_player(username))
+        player = create_player_entity(username)
+        spawn_action_data = {
+            'action': 'Spawn',
+            'entity': player,
+            'position': get_spawn_position()
+        }
+        connection_handler.add_player(player, session_id)
+        game_engine.action_manager.create_action(spawn_action_data)
         socketio.emit('authenticated', {"status": "success"})
     else:
         socketio.emit('unauthorized', {"status": "failure"})
@@ -56,9 +71,11 @@ def handle_connect():
 
 
 @socketio.on('disconnect')
+@authenticated_only
 def handle_disconnect():
     session_id = request.sid
-    connection_handler.remove_player_by_session(session_id)
+    player = connection_handler.remove_player_by_session(session_id)
+    game_engine.despawn_player(player)  # Implement despawn logic in GameEngine
     print("Client disconnected")
 
 
@@ -69,12 +86,36 @@ def handle_action(data):
     player = connection_handler.get_player_entity_by_session(session_id)
     print(f"Received action from {player.name}: {data}")
     if player:
-        action = Action(player, data['action'], data['target'], data['data'])
-        game_engine.add_action(action)
+        pass
+
+
+@socketio.on('getTexture')
+@authenticated_only
+def handle_request_textures(data):
+    session_id = request.sid
+    player = connection_handler.get_player_entity_by_session(session_id)
+    print(f"Received request for {data} textures from {player.name}")
+    if player:
+        textures = game_engine.get_textures(data)
+        socketio.emit('getTexture', textures)
 
 
 if __name__ == "__main__":
+    config = {
+            'TextureManager': {
+                'spritesheet': {
+                    'path': 'GameData/Assets/Textures/tilemap_packed.png',
+                    'type': 'spritesheet',
+                    'format': 'png',
+                    'h_texture': 192,
+                    'v_texture': 176,
+                    'h_spritesheet': 16,
+                    'v_spritesheet': 16,
+                },
+            }
+        }
     connection_handler = ConnectionHandler()
-    game_engine = GameEngine(socketio)
+    event_hub = EventHub()
+    game_engine = GameEngine(socketio, event_hub, config)
     threading.Thread(target=game_engine.run, daemon=True).start()
     socketio.run(app)
