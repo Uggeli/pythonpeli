@@ -8,8 +8,8 @@ class ConnectionHandler:
     players = []  # Entity objects
 
     def add_player(self, player, session_id):
-        if player not in self.connected_players:
-            self.connected_players[player] = session_id
+        if session_id not in self.connected_players:
+            self.connected_players[session_id] = player
             self.players.append(Entity(player, (0, 0), random.choice(self.colours)))
             print(f'{player} connected')
 
@@ -26,7 +26,7 @@ class ConnectionHandler:
         return None
 
     def get_player_by_session(self, session_id) -> str:
-        for player, id in self.connected_players.items():
+        for id, player in self.connected_players.items():
             if id == session_id:
                 return player
         return None
