@@ -13,6 +13,10 @@ class Connection {
         this.socket.on('unauthorized', this.handleUnauthorized.bind(this));
         this.socket.on('players', this.handlePlayers.bind(this));
         this.socket.on('gameStateUpdate', this.handleGameStateUpdate.bind(this));
+        this.socket.on('action', this.handleAction.bind(this));
+        this.socket.on('getTexture', this.handleGetTexture.bind(this));
+        this.socket.on('requestTexture', this.handleRequestTexture.bind(this));
+
     }
 
     connect(username, password) {
@@ -90,5 +94,13 @@ class Connection {
     updateConnectionStatus(status) {
         var connectionStatusDiv = document.getElementById('connectionStatus');
         connectionStatusDiv.innerHTML = status;
+    }
+
+    handleGetTexture(texture) {
+        this.renderer.addTexture(texture);
+    }
+
+    handleRequestTexture(textureName) {
+        this.socket.emit('getTexture', textureName);
     }
 }
