@@ -7,14 +7,14 @@ class Entity:
 
     def __init__(self, name, position, color):
         self.name = name
-        self.position = position
+        self.local_position = position
         self.color = color
 
     def move(self, x, y):
         self.position = (x, y)
 
     def __str__(self):
-        return f"{self.name} at {self.position}"
+        return f"{self.name} at {self.local_position}"
 
     def __repr__(self):
         return self.__str__()
