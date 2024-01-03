@@ -1,5 +1,7 @@
 // Renderer.js
 class Renderer {
+    Textures = {}
+
     constructor() {
         this.canvas = null;
         this.ctx = null;
@@ -15,6 +17,17 @@ class Renderer {
         this.ctx = this.canvas.getContext('2d');
     }
 
+    addTexture(texture) {
+        if (this.Textures[texture.name]) {
+            return;
+        }
+        this.Textures[texture.name] = texture;
+    }
+
+    getTexture(name) {
+        return this.Textures[name];
+    }
+
     renderMap(gameState) {
         if (!gameState || !gameState.tiles) {
             return;
@@ -25,18 +38,12 @@ class Renderer {
         for (let y = 0; y < gameState.tiles.length; y++) {
             for (let x = 0; x < gameState.tiles[y].length; x++) {
                 const cell = gameState.tiles[y][x];
-                if (cell === 0) {
-                    // Empty cell
-                    this.ctx.fillStyle = 'white';
-                    this.ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
-                } else if (cell === 'w') {
-                    // Wall
-                    this.ctx.fillStyle = 'black';
-                    this.ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
-                } else {
-                    // Player
-                    this.ctx.fillStyle = cell.color;
-                    this.ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
+                const texture = this.getTexture(cell);
+                if (!texture) {
+                    connection.handleRequestTexture(cell);
+                }
+                else {
+                    this.ctx.drawImage(texture, x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
                 }
             }
         }

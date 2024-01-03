@@ -1,3 +1,5 @@
+// game.js
+
 let gameState = null; // The current game state
 const renderer = new Renderer();
 const connection = new Connection(renderer);
