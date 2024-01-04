@@ -23,6 +23,9 @@ class Event:
     def update_status(self, new_status):
         self.status = new_status
 
+    def __repr__(self) -> str:
+        return f"Event {self.name} with data {self.data} status {self.status} callback {self.callback}"
+
 
 class EventHub:
     def __init__(self):
@@ -50,7 +53,9 @@ class EventHub:
         if event.name in self.listeners:
             for listener in self.listeners[event.name]:
                 listener(event)
-
+                return
+        raise Exception(f"Event {event.name} has no listeners")
+        
     def remove_listener(self, event_name, listener):
         print(f"Removing listener {listener} from event {event_name}")
         if event_name in self.listeners:
