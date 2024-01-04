@@ -21,11 +21,8 @@ class GameEngine:
         self.actions = Queue()
 
     def get_textures(self, data):
-        return [
-            self.texture_manager.getTexture(texture)
-            for texture in data
-            if self.texture_manager.getTexture(texture)
-        ]
+        textures = [self.texture_manager.getTexture(tx) for tx in data]
+        return textures
 
     def run(self):
         previous_time = time.time()
