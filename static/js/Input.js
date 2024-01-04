@@ -4,7 +4,8 @@ class InputManager {
             up: ["ArrowUp", "w"],
             down: ["ArrowDown", "s"],
             left: ["ArrowLeft", "a"],
-            right: ["ArrowRight", "d"]
+            right: ["ArrowRight", "d"],
+            accept: ["Enter", " "],
         };
     }
 
@@ -24,6 +25,12 @@ class InputManager {
                             break;
                         case "right":
                             this.movePlayer("right");
+                            break;
+                        case "accept":
+                            if (document.activeElement.tagName.toLowerCase() === "input") {
+                                
+                                console.log("Sending message");
+                            }
                             break;
                     }
                 }
