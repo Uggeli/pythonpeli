@@ -74,9 +74,15 @@ def handle_connect():
 @authenticated_only
 def handle_disconnect():
     session_id = request.sid
-    player = connection_handler.remove_player_by_session(session_id)
-    game_engine.despawn_player(player)  # Implement despawn logic in GameEngine
-    print("Client disconnected")
+    player = connection_handler.get_player_entity_by_session(session_id)
+    if player:
+        despawn_action_data = {
+            'action': 'Despawn',
+            'entity': player,
+        }
+        game_engine.action_manager.create_action(despawn_action_data)
+        connection_handler.remove_player(player)
+    print(f"{player.name if isinstance(player, Entity) else 'client'} disconnected")
 
 
 @socketio.on('action')
@@ -89,7 +95,7 @@ def handle_action(data):
         pass
 
 
-@socketio.on('getTexture')
+@socketio.on('requestTexture')
 @authenticated_only
 def handle_request_textures(data):
     session_id = request.sid
