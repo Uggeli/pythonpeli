@@ -56,14 +56,31 @@ class MapManager(Manager):
         print("Setting up map manager")
         self.event_hub.add_listener('CollisionCheck', self.OnEvent)
         self.event_hub.add_listener('Spawn', self.OnEvent)
+        self.event_hub.add_listener('Despawn', self.OnEvent)
 
     def update(self):
         for event in self.event_queue:
-            if event.name == 'CollisionCheck':
-                self.handle_collision_check(event)
-            elif event.name == 'Spawn':
-                self.handle_spawn(event)
+            if not isinstance(event, Event):
+                print(f"Error: {event} is not an instance of Event")
+                continue
+            try:
+                print(f"Handling event {event.name}")
+                if event.name == 'CollisionCheck':
+                    self.handle_collision_check(event)
+                elif event.name == 'Spawn':
+                    self.handle_spawn(event)
+                elif event.name == 'Despawn':
+                    self.handle_despawn(event)
+            except Exception as e:
+                event.update_status(-1)  # it clearly failed
+                print(f"Error handling event {event.name}: {e}")
         self.event_queue = []
+
+    def handle_despawn(self, event: Event):
+        result = self.Despawn(event.data)
+        event.update_status(1 if result else -1)
+        if event.callback:
+            event.callback(event)
 
     def handle_collision_check(self, event: Event):
         result = self.CollisionCheck(event.data)
@@ -98,6 +115,15 @@ class MapManager(Manager):
             self.DUMMY_MAP[location[1]][location[0]] = entity
             self.UpdateEntity(entity, location)
             self.Entities.append(entity)
+            return True
+        return False
+
+    def Despawn(self, data):
+        entity = data['entity']
+        print(f"Despawning {entity.name} from {entity.local_position}")
+        if entity in self.Entities:
+            self.DUMMY_MAP[entity.local_position[1]][entity.local_position[0]] = 0
+            self.Entities.remove(entity)
             return True
         return False
 
@@ -229,6 +255,12 @@ class TextureManager(Manager):
             return None
 
     def getTexture(self, texture_name):
+        # quick and dirty
+        texture_name_map = {
+            0: 'spritesheet_0_0',
+            'w': 'spritesheet_0_1',
+        }
+        texture_name = texture_name_map.get(texture_name, 'spritesheet_0_0')
         try:
             return self.textures[texture_name]
         except KeyError:
@@ -275,8 +307,13 @@ class ActionManager(Manager):
         print(f'Spawn action created for {entity.name} at {position}')
 
     def handle_despawn(self, data):
-        # Logic for handling despawn action
-        pass
+        print("Handling despawn action")
+        entity = data['entity']
+        required_events = [
+            {'event_name': 'Despawn', 'data': {'entity': entity}}
+        ]
+        self.actions.append(Action("Despawn", required_events, self.event_hub))
+        print(f'Despawn action created for {entity.name}')
 
     def remove_action(self, action: Action):
         self.actions.remove(action)
