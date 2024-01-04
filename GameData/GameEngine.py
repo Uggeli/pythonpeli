@@ -21,7 +21,7 @@ class GameEngine:
         self.actions = Queue()
 
     def get_textures(self, data):
-        textures = [self.texture_manager.getTexture(tx) for tx in data]
+        textures = [self.texture_manager.getTexture(tx) for tx in data if isinstance(tx, str) or isinstance(tx, int)]
         return textures
 
     def run(self):

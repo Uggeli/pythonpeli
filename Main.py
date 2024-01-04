@@ -1,4 +1,5 @@
 import functools
+import json
 from GameData.ConnectionHandler import ConnectionHandler
 from GameData.EventHub import EventHub
 from GameData.GameEngine import GameEngine
@@ -103,7 +104,7 @@ def handle_request_textures(data):
     print(f"Received request for {data} textures from {player.name}")
     if player:
         textures = game_engine.get_textures(data)
-        socketio.emit('getTexture', textures)
+        socketio.emit('textureResponse', json.dumps(textures))
 
 
 if __name__ == "__main__":

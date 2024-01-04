@@ -1,3 +1,5 @@
+import base64
+from io import BytesIO
 from PIL import Image
 import gzip
 
@@ -182,6 +184,13 @@ class Texture:
         self.name = None
         self.size = None
 
+    def to_json(self):
+        return {
+            'name': self.name,
+            'data': self.data,
+            'size': self.size,
+        }
+
 
 class TextureManager(Manager):
     def __init__(self, config, event_hub: EventHub = None) -> None:
@@ -238,7 +247,8 @@ class TextureManager(Manager):
                         cropped_img = img.crop((x * sprite_width, y * sprite_height,
                                                (x + 1) * sprite_width, (y + 1) * sprite_height))
                         # tx.data = self.compressTexture(cropped_img.tobytes())
-                        tx.data = cropped_img
+                        # tx.data = cropped_img
+                        tx.data = self.compress_and_encode_image(cropped_img)
                         tx.name = f'{texture_name}_{x}_{y}'
                         tx.size = (sprite_width, sprite_height)
                         self.textures[tx.name] = tx
@@ -247,22 +257,25 @@ class TextureManager(Manager):
             # Animation handling logic here
             pass
 
-    def compressTexture(self, textureData):
-        try:
-            return gzip.compress(textureData)
-        except Exception as e:
-            print(f'Error compressing texture: {e}')
-            return None
+    def compress_and_encode_image(self, pil_image):
+        img_buffer = BytesIO()
+        pil_image.save(img_buffer, format='PNG', optimize=True)  # 'optimize=True' for compression
+        byte_data = img_buffer.getvalue()
+        base64_str = base64.b64encode(byte_data).decode('utf-8')
+        return base64_str
 
     def getTexture(self, texture_name):
         # quick and dirty
         texture_name_map = {
             0: 'spritesheet_0_0',
-            'w': 'spritesheet_0_1',
+            'w': 'spritesheet_4_3',
         }
-        texture_name = texture_name_map.get(texture_name, 'spritesheet_0_0')
+        mapped_name = texture_name_map.get(texture_name, 'spritesheet_0_0')
         try:
-            return self.textures[texture_name]
+            texture = self.textures[mapped_name]
+            texture.name = texture_name
+            return texture.to_json()
+            # return self.serialize_texture(self.textures[texture_name])
         except KeyError:
             print(f'Texture {texture_name} not found')
             return None
