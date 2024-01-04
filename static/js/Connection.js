@@ -3,28 +3,37 @@ class Connection {
         this.renderer = renderer;
         this.socket = null;
         this.connected = false;
+        this.updateConnectionStatus('Disconnected');
     }
 
-    setup() {
+    connect() {
         this.socket = io();
         this.socket.on('connect', this.handleConnect.bind(this));
         this.socket.on('disconnect', this.handleDisconnect.bind(this));
-        this.socket.on('authenticated', this.handleAuthentication.bind(this));
+        this.socket.on('authenticated', this.handleAuthenticationResponse.bind(this));
         this.socket.on('unauthorized', this.handleUnauthorized.bind(this));
         this.socket.on('players', this.handlePlayers.bind(this));
         this.socket.on('gameStateUpdate', this.handleGameStateUpdate.bind(this));
         this.socket.on('action', this.handleAction.bind(this));
-        this.socket.on('getTexture', this.handleGetTexture.bind(this));
-        this.socket.on('requestTexture', this.handleRequestTexture.bind(this));
-
+        this.socket.on('textureResponse', textureManager.handleTextureResponse.bind(textureManager));
     }
 
-    connect(username, password) {
+    disconnect() {
+        this.socket.disconnect();
+        this.socket = null;
+    }
+
+    AuthUser(username, password) {
+        if (!this.socket) {
+            this.connect();
+        }
         this.socket.emit('authentication', { username: username, password: password });
+        this.updateConnectionStatus('Authenticating...');
     }
 
     handleConnect() {
         console.log('Connected to server');
+        this.connected = true;
         this.updateConnectionStatus('Connected');
     }
 
@@ -33,7 +42,22 @@ class Connection {
         this.updateConnectionStatus('Disconnected');
     }
 
-    handleAuthentication(response) {
+    updateConnectionStatus(status) {
+        const statusDiv = document.getElementById('connectionStatus');
+        if (this.connected) {
+            let disconnect_button = document.createElement('button');
+            disconnect_button.innerHTML = 'Disconnect';
+            disconnect_button.onclick = this.disconnect.bind(this);
+        }
+        else {
+            let connect_button = document.createElement('button');
+            connect_button.innerHTML = 'Connect';
+            connect_button.onclick = this.connect.bind(this);
+        }
+        statusDiv.innerHTML = status;
+    }
+
+    handleAuthenticationResponse(response) {
         if (response.status === "success") {
             console.log('Authenticated successfully');
             document.getElementById('login').style.display = 'none'; // Hide login form
@@ -41,10 +65,10 @@ class Connection {
         } else {
             alert('Authentication failed');
         }
+        this.updateConnectionStatus('Authenticated');
     }
 
     handleUnauthorized(msg) {
-        msg = JSON.parse(msg);
         try {
             msg = JSON.parse(msg);
         }
@@ -79,7 +103,7 @@ class Connection {
         try {
             const parsedState = JSON.parse(newState);
             gameState = parsedState;
-            this.renderer.renderMap(gameState);
+            renderer.renderMap(gameState);
         } catch (e) {
             console.error("Error parsing gameState:", e);
         }
@@ -89,18 +113,5 @@ class Connection {
         if (this.connected) {
             this.socket.emit('action', action);
         }
-    }
-
-    updateConnectionStatus(status) {
-        var connectionStatusDiv = document.getElementById('connectionStatus');
-        connectionStatusDiv.innerHTML = status;
-    }
-
-    handleGetTexture(texture) {
-        this.renderer.addTexture(texture);
-    }
-
-    handleRequestTexture(textureName) {
-        this.socket.emit('getTexture', textureName);
     }
 }
