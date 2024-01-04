@@ -20,11 +20,18 @@ class Entity:
         return self.__str__()
 
     def __eq__(self, other):
-        return self.name == other.name
+        if isinstance(other, Entity):
+            return self.name == other.name
+        if isinstance(other, str):
+            return self.name == other
+        return False
+
+    def __hash__(self):
+        return hash(self.name)
 
     def to_dict(self):
         return {
             "name": self.name,
-            "position": self.position,
+            "position": self.local_position,
             "color": self.color
         }
